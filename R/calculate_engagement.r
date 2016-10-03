@@ -14,14 +14,7 @@ calculate_post_engagement <- function(data_in
                                       , weight_comment = 5
                                       , weight_share = 10
                                       , reach_modifier = .8){
-#     data.table(
-#       post_id = 1:4
-#       , engagement_score = 
-#           (weight_comment*data_in$comments 
-#            + weight_share*data_in$shares
-#           )/data_in$reach^reach_modifier
-#     )
-#     
+     
   data2 <- data.table(data_in)
   out <- 
     data2[
@@ -33,6 +26,7 @@ calculate_post_engagement <- function(data_in
       , by = post_id
     ]
   return(out)
+  
 }
 
 
