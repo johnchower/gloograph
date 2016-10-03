@@ -1,5 +1,4 @@
 library(data.table)
-loadNamespace("data.table")
 
 test_that("calculate_post_engagement returns correct result.", {
   test_in <- data.table(
