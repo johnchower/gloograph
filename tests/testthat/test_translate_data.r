@@ -24,4 +24,7 @@ test_that("translate_data returns correct result", {
     , shares = 1
   )                                
 
+  expect_equal(do.call(what = gloograph::translate_data
+                       , args = test_input)
+               , expected_result)
 })
