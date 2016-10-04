@@ -11,5 +11,6 @@ LazyData: true
 Suggests:
     testthat
 Imports:
-    data.table
+    data.table,
+    rprojroot
 RoxygenNote: 5.0.1
