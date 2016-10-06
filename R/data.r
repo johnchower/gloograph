@@ -7,10 +7,10 @@
 #' @format
 #' \describe{
 #'   \item{time}{When the action was taken.}
-#'   \item{subject}{The user who took a specified action}
+#'   \item{user_id}{The user who took a specified action}
 #'   \item{action}{What the user did}
-#'   \item{object}{Who the user did the action to}
-#'   \item{post_id}{In the case of a post oject, the id of the post}
+#'   \item{object_type}{The type of object that the user took action on}
+#'   \item{object_id}
 #' }
 
 "test_timeline"
