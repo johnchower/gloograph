@@ -37,5 +37,9 @@ calculate_post_engagement <- function(data_in
 #' @import data.table
 
 translate_data <- function(organized_data_in){
-  "Hello"
+  posts <- organized_data_in$posts
+  data.table::setkey(posts, postable_type)
+  posts["Space"]
+  space_posts <- organized_data_in$posts[postable_type == "Space"]
+
 }

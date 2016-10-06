@@ -285,7 +285,8 @@ create_organized_test_data <- function(timeline){
     , spaces_users = Spaces_Users
     , connections = Connections
     , follows = Follows
-  )
+  ) %>%
+  lapply(data.table::as.data.table)
 }
 
 #' Create 'pulled' test data.
