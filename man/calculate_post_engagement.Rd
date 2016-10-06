@@ -2,7 +2,7 @@
 % Please edit documentation in R/calculate_engagement.r
 \name{calculate_post_engagement}
 \alias{calculate_post_engagement}
-\title{Calculate the engagement score of a post.}
+\title{Calculate the engagement score of a post, from translated data.}
 \usage{
 calculate_post_engagement(data_in, weight_comment = 5, weight_share = 10,
   reach_modifier = 0.8)
@@ -19,6 +19,6 @@ shares}
 A data frame consisting of 2 columns: post_id engagement_score
 }
 \description{
-Calculate the engagement score of a post.
+Calculate the engagement score of a post, from translated data.
 }
 

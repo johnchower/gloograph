@@ -44,8 +44,8 @@ create_calculated_test_data <- function(timeline
      dplyr::slice(1) %>%
      {.$user_id}
 
-  # Determine reach by counting all users who joined or connected before post
-  # time.
+  # Determine reach by counting all users who have ever joined the space or
+  # connected to the poster, depending on post type
   if (post_location_type == "feed"){
     reach <- timeline %>%
       dplyr::filter(
@@ -144,8 +144,8 @@ create_translated_test_data <- function(timeline){
      dplyr::slice(1) %>%
      {.$user_id}
 
-  # Determine reach by counting all users who joined or connected before post
-  # time.
+  # Determine reach by counting all users who have ever joined the space or
+  # connected to the poster, depending on post type
   if (post_location_type == "feed"){
     reach <- timeline %>%
       dplyr::filter(

@@ -1,7 +1,6 @@
-# This file contains functions for calculating engagement scores from
-# translated data.
+# This file contains functions for calculating engagement scores for each post.
 
-#' Calculate the engagement score of a post.
+#' Calculate the engagement score of a post, from translated data.
 #' 
 #' @param data_in A data frame (or data table) consisting of 4 columns : post_id reach comments
 #' shares
@@ -29,4 +28,14 @@ calculate_post_engagement <- function(data_in
   
 }
 
+#' Translate data to prep it for the engagement score calculation.
+#' 
+#' @param organized_data_in A list of data frames (the result of orgainizing
+#' the data pulled from production.)
+#' @return A data frame (or data table) consisting of 4 columns : post_id reach comments
+#' shares
+#' @import data.table
 
+translate_data <- function(organized_data_in){
+  "Hello"
+}
