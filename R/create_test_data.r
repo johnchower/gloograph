@@ -52,7 +52,7 @@ create_calculated_test_data <- function(timeline
 
   # Determine reach by counting all users who have ever joined the space or
   # connected to the poster, depending on post type
-  if (post_location_type == "feed"){
+  if (post_location_type == "Timeline"){
     reach <- timeline %>%
       dplyr::filter(
         # time <= post_time
@@ -158,7 +158,7 @@ create_translated_test_data <- function(timeline){
 
   # Determine reach by counting all users who have ever joined the space or
   # connected to the poster, depending on post type
-  if (post_location_type == "feed"){
+  if (post_location_type == "Timeline"){
     reach <- timeline %>%
       dplyr::filter(
         # time <= post_time
@@ -206,11 +206,6 @@ create_translated_test_data <- function(timeline){
     unique %>%
     nrow
 
-  score <- 
-    (weight_comment*comments 
-     + weight_share*shares
-    )/reach^reach_modifier
- 
   out <- rbind(out, data.table(post_id = post
                                , reach = reach
                                , comments = comments
@@ -227,13 +222,33 @@ create_translated_test_data <- function(timeline){
 
 
 create_organized_test_data <- function(timeline){
+  "hello"
 #   posts <- timeline %>%
 #     dplyr::filter(action == "posts") %>%
-#     dplyr::rename(
+#     dplyr::select(
 #       postable_type = object_type
-#       , owner_id = owner_id
+#       , created_at = time
+#       , postable_id = object_id
+#       , post_id
+#       , owner_id
+#       , owner_type
+#     )
+# 
+#   comments <- timeline %>%
+#     dplyr::filter(action == "comments") %>%
+#     dplyr::select(
+#       post_id = object_id
+#       , user_id
+#       , created_at = time
+#     )                  
+# 
+#   shares <- timeline %>%
+#     dplyr::filter(action == "shares") %>%
+#     dplyr::select(
+#       post_id = objet_id
 #       , 
-  "hello"
+#     )
+ 
 }
 
 #' Create 'pulled' test data.
