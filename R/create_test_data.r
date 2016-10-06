@@ -222,33 +222,70 @@ create_translated_test_data <- function(timeline){
 
 
 create_organized_test_data <- function(timeline){
-  "hello"
-#   posts <- timeline %>%
-#     dplyr::filter(action == "posts") %>%
-#     dplyr::select(
-#       postable_type = object_type
-#       , created_at = time
-#       , postable_id = object_id
-#       , post_id
-#       , owner_id
-#       , owner_type
-#     )
-# 
-#   comments <- timeline %>%
-#     dplyr::filter(action == "comments") %>%
-#     dplyr::select(
-#       post_id = object_id
-#       , user_id
-#       , created_at = time
-#     )                  
-# 
-#   shares <- timeline %>%
-#     dplyr::filter(action == "shares") %>%
-#     dplyr::select(
-#       post_id = objet_id
-#       , 
-#     )
+
+  Posts <- timeline %>%
+    dplyr::filter(action == "posts") %>%
+    dplyr::select(
+      post_id
+      , owner_id
+      , owner_type
+      , postable_id = object_id
+      , postable_type = object_type
+      , created_at = time
+    )
+
+  Comments <- timeline %>%
+    dplyr::filter(action == "comments") %>%
+    dplyr::select(
+      post_id = object_id
+      , user_id = owner_id
+      , created_at = time
+    )                  
+
+  Shares <- timeline %>%
+    dplyr::filter(action == "shares") %>%
+    dplyr::select(
+      post_id = object_id
+      , sharer_id = owner_id
+      , shared_at = time
+    )
  
+  Spaces_Users <- timeline %>%
+    dplyr::filter(action %in% c('joins', 'leaves')
+                  , object_type == "Space") %>%
+    dplyr::select(
+      space_id = object_id
+      , user_id = owner_id
+      , event_type = action
+      , event_date = time
+    )
+
+  Connections <- timeline %>%
+    dplyr::filter(action == 'connects') %>%
+    dplyr::select(
+      connectable1_id = owner_id
+      , connectable2_id = object_id
+      , connectable2_type = object_type
+      , created_at = time
+    ) 
+
+  Follows <- timeline %>%
+    dplyr::filter(action == 'follows') %>%
+    dplyr::select(
+      follower_id = owner_id
+      , followable_id = object_id
+      , followable_type = object_type
+      , created_at = time
+    )
+
+  list(
+    posts = Posts
+    , comments = Comments
+    , shares = Shares
+    , spaces_users = Spaces_Users
+    , connections = Connections
+    , follows = Follows
+  )
 }
 
 #' Create 'pulled' test data.
