@@ -165,7 +165,7 @@ create_translated_test_data <- function(timeline){
         # , 
         action %in% c("connects", "follows")
         , object_id == post_location
-        , owner_id != post_owner | owner_type != post_owner_type
+#         , owner_id != post_owner | owner_type != post_owner_type
     ) %>%
     {data.frame(id = .$owner_id, type = .$owner_type)} %>%
     unique %>%

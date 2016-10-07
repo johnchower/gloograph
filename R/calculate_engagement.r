@@ -32,14 +32,100 @@ calculate_post_engagement <- function(data_in
 #' 
 #' @param organized_data_in A list of data frames (the result of orgainizing
 #' the data pulled from production.)
-#' @return A data frame (or data table) consisting of 4 columns : post_id reach comments
+#' @return A data frame (or data table) consisting of 4 columns : 
+#' post_id reach comments
 #' shares
 #' @import data.table
 
 translate_data <- function(organized_data_in){
   posts <- organized_data_in$posts
   data.table::setkey(posts, postable_type)
-  posts["Space"]
-  space_posts <- organized_data_in$posts[postable_type == "Space"]
 
+  # Calculate reach of space posts
+  space_posts_bare <- posts[.("Space"), .(space_id = postable_id, post_id)]
+  data.table::setkey(space_posts_bare, space_id)
+
+  spaces_users_bare <- organized_data_in$spaces_users[,.(space_id, user_id)]
+  data.table::setkey(spaces_users_bare, space_id)
+
+  space_posts_reach <- space_posts_bare[
+    ,
+    .(
+      reach = 
+        .SD[
+          spaces_users_bare,
+          length(unique(user_id)) - 1,
+          nomatch = 0L
+        ]
+    ),
+    by=post_id
+  ]
+
+  # Calculate reach of feed posts
+  feed_posts_bare <- posts[.("Timeline"),
+                           .(poster_id = postable_id,
+                           post_id)]
+  data.table::setkey(feed_posts_bare, poster_id)
+
+  follows_bare <- organized_data_in$follows[
+                                            , .(follower_id, followable_id)
+                                            ,]
+  
+  connections_bare_1 <- 
+    organized_data_in$connections[
+      , .(follower_id = connectable1_id,
+          followable_id = connectable2_id)
+    ,]
+  connections_bare_2 <- 
+    organized_data_in$connections[
+      , .(follower_id = connectable2_id,
+          followable_id = connectable1_id)
+    ,]
+  
+  connections_bare <- rbind(connections_bare_1
+                            , connections_bare_2
+                            , follows_bare)  
+  
+  data.table::setkey(connections_bare, followable_id)
+
+  feed_posts_reach <- feed_posts_bare[
+    ,
+    .(
+      reach = 
+        .SD[
+          connections_bare,
+          length(unique(follower_id)),
+          nomatch = 0L
+        ]
+    ),
+    by = post_id
+  ]
+
+  # Total reach of each post
+  post_reach <- rbind(feed_posts_reach, space_posts_reach)
+  data.table::setkey(post_reach, post_id)
+
+  # Calculate number of comments
+  comments <- organized_data_in$comments[
+    ,
+    .(comments = .N),
+    by = post_id
+  ]
+  data.table::setkey(comments, post_id)
+
+  # Calculate the number of shares
+  shares <- organized_data_in$shares[
+    ,
+    .(shares = .N),
+    by = post_id
+  ]
+  data.table::setkey(shares, post_id)
+
+  post_list <- posts[,.(post_id)]
+  data.table::setkey(post_list, post_id)
+
+  out <- post_reach[comments[shares[post_list]]]
+  out[is.na(out)] <- 0
+  data.table::setkey(out, NULL)
+  out
 }
