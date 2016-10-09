@@ -1,5 +1,20 @@
 # Functions to create test data sets
 
+#' Create random test timeline.
+#'
+#' @param seed Optional random seed to reproduce results.
+#' @return A test timeline data frame of the same form as 
+#' gloograph::test_timeline
+#' @importFrom magrittr %>%
+
+create_random_test_timeline <- function(seed = NULL){
+  
+  num_users <- sample(1:40, 1)
+  num_spaces <- sample(5:15, 1)
+
+
+}
+
 #' Create 'calculated' test data set.
 #'
 #' @param timeline A data frame that describes a sequence of post-related

@@ -11,7 +11,8 @@ translate_data(organized_data_in)
 the data pulled from production.)}
 }
 \value{
-A data frame (or data table) consisting of 4 columns : post_id reach comments
+A data frame (or data table) consisting of 4 columns : 
+post_id reach comments
 shares
 }
 \description{
