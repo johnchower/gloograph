@@ -4,13 +4,15 @@
 \alias{create_random_test_timeline}
 \title{Create random test timeline.}
 \usage{
-create_random_test_timeline(seed = NULL)
+create_random_test_timeline(seed = NULL, max_users = 40, min_users = 10,
+  max_spaces = 15, min_spaces = 5, max_timeline_posts_per_user = 20,
+  max_space_post_per_user_space = 5)
 }
 \arguments{
 \item{seed}{Optional random seed to reproduce results.}
 }
 \value{
-A test timeline data frame of the same form as 
+A randomly-generated test timeline data frame of the same form as 
 gloograph::test_timeline
 }
 \description{
