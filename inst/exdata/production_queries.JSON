@@ -1,0 +1,22 @@
+[ 
+  {
+    "query_name" : "connections",
+    "query" : "/* Connections */ SELECT connectable1_id , connectable2_id , created_at FROM connections WHERE connectable1_type = 'User' AND connectable2_type = 'User' ;"
+  },
+  {
+    "query_name" : "follows",
+    "query" : "/* Follows */ SELECT followable_id , follower_id , created_at FROM follows WHERE follower_type = 'User' AND followable_type = 'User' ;"
+  },
+  {
+    "query_name" : "posts",
+    "query" : "/* Posts */ select owner_id , id post_id , postable_type , postable_id , created_at from posts where owner_type = 'User' ;"
+  },
+  {
+    "query_name" : "comments",
+    "query" : "/* Comments */ SELECT user_id , post_id , created_at FROM comments WHERE owner_type = 'User' ;"
+  },
+  {
+    "query_name" : "shares",
+    "query" : "/* Shares */ SELECT posts.owner_id user_id, artifacts.id artifact_id FROM posts JOIN artifacts ON posts.artifact_id = artifacts.id WHERE posts.owner_type = 'User' AND posts.post_type = 0 AND (posts.postable_type = 'Timeline' OR posts.postable_type = 'Space') ;"
+  }
+]

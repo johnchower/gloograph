@@ -512,3 +512,20 @@ create_organized_test_data <- function(timeline){
 create_pulled_test_data <- function(timeline){
   "hi"
 }
+
+#' Pull a small set of data from production.
+#'
+#' @param con Connection object for production database.
+#' 
+#' @return A list of data frames:
+#'  spaces_users_small
+#'  connections_small
+#'  follows_small
+#'  posts_small
+#'  comments_small
+#'  shares_small
+
+pull_small_production_data <- function(){
+   
+}
+

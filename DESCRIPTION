@@ -13,5 +13,7 @@ Suggests:
     plyr
 Imports:
     data.table,
-    rprojroot
+    rprojroot,
+    glootility
+Remotes: johnchower/glootility
 RoxygenNote: 5.0.1
