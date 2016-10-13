@@ -20,7 +20,7 @@ create_random_test_timeline <- function(
     set.seed(seed)
   }
 
-  date_range <- oeq.Date(
+  date_range <- seq.Date(
     from = as.Date('2016-01-01')
     , to = as.Date('2016-06-30')
     , by = 1
@@ -45,7 +45,8 @@ create_random_test_timeline <- function(
                               , replace = T)
       data.frame(user_id = rep(user, times = number_of_spaces_to_join)
                  , space_id = spaces_to_join
-                 , created_at = times_to_join) 
+                 , created_at = times_to_join
+                 , stringsAsFactors = F) 
     })
 
   follow_actions <-
@@ -61,7 +62,8 @@ create_random_test_timeline <- function(
                                  , replace = T)
       data.frame(follower_id = rep(user, times = number_of_users_to_connect_to)
                  , followable_id = users_to_connect_to
-                 , created_at = times_to_connect)
+                 , created_at = times_to_connect
+                 , stringsAsFactors = F)
     })
 
   connection_actions <- 
@@ -83,7 +85,8 @@ create_random_test_timeline <- function(
       created_at <- rep(times_to_connect, times = 2)
       out <- data.frame(connectable1_id
                  , connectable2_id
-                 , created_at)
+                 , created_at
+                 , stringsAsFactors = F)
     }) %>%
     dplyr::group_by(connectable1_id, connectable2_id) %>%
     dplyr::filter(created_at == min(created_at)) %>%
@@ -100,7 +103,8 @@ create_random_test_timeline <- function(
       data.frame(user_id = user
                  , postable_id = user
                  , postable_type = "Timeline"
-                 , created_at = times_to_post)
+                 , created_at = times_to_post
+                 , stringsAsFactors = F)
     })
 
   space_post_actions <- 
@@ -110,7 +114,6 @@ create_random_test_timeline <- function(
       space_joins <- space_join_actions %>%
         dplyr::filter(user_id == user) %>%
         dplyr::group_by(user_id, space_id) 
-
       space_joins %>%
         dplyr::do({
           min_date <- .$created_at[1]
@@ -128,7 +131,8 @@ create_random_test_timeline <- function(
                      , postable_id = rep(.$space_id[1]
                                    , times = number_of_posts_to_make)
                      , postable_type = "Space"
-                     , created_at = times_to_post)
+                     , created_at = times_to_post
+                     , stringsAsFactors = F)
         })
     }) %>%
     dplyr::select(-space_id)
@@ -139,14 +143,21 @@ create_random_test_timeline <- function(
     dplyr::mutate(post_id = 1:nrow(.))
 
   comments_shares <- post_actions %>% 
-    dplyr::group_by(postable_id, postable_type, created_at) %>%
+    dplyr::rename(poster_id = user_id) %>%
+    dplyr::group_by(postable_id
+                    , postable_type
+                    , created_at
+                    , post_id
+                    , poster_id) %>%
     dplyr::do({
       if(.$postable_type[1] == "Space"){
         current_space_id <- .$postable_id[1]
         current_post_created_at <- .$created_at[1]
+        current_user_id <- .$poster_id[1]
         users_belonging_to_current_space <- 
           space_join_actions %>%
-          dplyr::filter(space_id == current_space_id) %>%
+          dplyr::filter(space_id == current_space_id
+                        , user_id != current_user_id) %>%
           dplyr::select(user_id) %>%
           unique
         number_of_users_in_audience <- 
@@ -161,7 +172,7 @@ create_random_test_timeline <- function(
           )) %>%
           dplyr::mutate(
             response_type = sample(
-              c("Comment", "Share")                                   
+              c('comments', 'shares')                                   
               , nrow(.)
               , replace = T
             )
@@ -196,7 +207,7 @@ create_random_test_timeline <- function(
           )) %>%
           dplyr::mutate(
             response_type = sample(
-              c("Comment", "Share")                                   
+              c('comments', 'shares')                                   
               , nrow(.)
               , replace = T
             )
@@ -206,11 +217,88 @@ create_random_test_timeline <- function(
     }) %>%
     dplyr::ungroup() %>%
     dplyr::group_by(created_at) %>%
-    dplyr::mutate(response_time = sample(seq.Date(current_post_created_at
-                                              , as.Date('2016-06-30')
-                                              , by = 1)
-                                         , nrow(.)))
-  
+    dplyr::mutate(
+      response_time = 
+        sample(seq.Date(min(created_at) # Try changing this line
+                        , as.Date('2016-06-30')
+                        , by = 1)
+               , n()
+               , replace = T)) %>%
+    dplyr::ungroup()
+               
+  timeline_comments_shares <- comments_shares %>%
+    dplyr::select(time = response_time
+                  , action = response_type
+                  , object_id = post_id
+                  , owner_id = user_id) %>%
+    dplyr::mutate(post_id = NA
+                  , owner_type = "User"
+                  , object_type = 'post')
+           
+  timeline_connection_actions <- connection_actions %>%
+    dplyr::select(time = created_at
+                  , object_id = connectable2_id
+                  , owner_id = connectable1_id) %>%
+    dplyr::mutate(action = 'connects'
+                  , object_type = 'user'
+                  , post_id = NA
+                  , owner_type = 'User')
+
+  timeline_follow_actions <- follow_actions %>%
+    dplyr::select(time = created_at
+                  , object_id = followable_id
+                  , owner_id = follower_id) %>%
+    dplyr::mutate(action = 'follows'
+                  , object_type = 'user'
+                  , post_id = NA
+                  , owner_type = 'User') %>%
+    dplyr::select(time
+                  , action
+                  , object_type
+                  , object_id
+                  , owner_id
+                  , post_id
+                  , owner_type)
+
+  timeline_post_actions <- post_actions %>%
+    dplyr::select(time = created_at
+                  , object_type = postable_type
+                  , object_id = postable_id
+                  , owner_id = user_id
+                  , post_id) %>%
+    dplyr::mutate(action = 'posts'
+                  , owner_type = 'User') %>%
+    dplyr::select(time
+                  , action
+                  , object_type
+                  , object_id
+                  , owner_id
+                  , post_id
+                  , owner_type)
+                  
+  timeline_space_join_actions <- space_join_actions %>%
+    dplyr::select(time = created_at
+                  , object_id = space_id
+                  , owner_id = user_id) %>%
+    dplyr::mutate(action = 'joins'
+                  , object_type = 'Space'
+                  , post_id = NA
+                  , owner_type = 'User') %>%
+    dplyr::select(time
+                  , action
+                  , object_type
+                  , object_id
+                  , owner_id
+                  , post_id
+                  , owner_type)
+  timeline_out <- rbind(timeline_comments_shares
+                        , timeline_connection_actions
+                        , timeline_follow_actions
+                        , timeline_post_actions
+                        , timeline_space_join_actions) %>%
+    dplyr::arrange(time)
+
+  return(timeline_out)
 }
 
 #' Create 'calculated' test data set.
@@ -298,8 +386,6 @@ create_calculated_test_data <- function(timeline
       , action == "comments"
       , object_id == post
     ) %>%
-    {data.frame(id = .$owner_id, type = .$owner_type)} %>%
-    unique %>%
     nrow
     
   # Find number of shares
@@ -309,8 +395,6 @@ create_calculated_test_data <- function(timeline
       , action == "shares"
       , object_id == post
     ) %>%
-    {data.frame(id = .$owner_id, type = .$owner_type)} %>%
-    unique %>%
     nrow
 
   score <- 
@@ -400,23 +484,17 @@ create_translated_test_data <- function(timeline){
   # Find number of comments
   comments  <- timeline %>%
     dplyr::filter(
-      time >= post_time
-      , action == "comments"
+      action == "comments"
       , object_id == post
     ) %>%
-    {data.frame(id = .$owner_id, type = .$owner_type)} %>%
-    unique %>%
     nrow
     
   # Find number of shares
   shares <- timeline %>%  
     dplyr::filter(
-      time >= post_time
-      , action == "shares"
+      action == "shares"
       , object_id == post
     ) %>%
-    {data.frame(id = .$owner_id, type = .$owner_type)} %>%
-    unique %>%
     nrow
 
   out <- rbind(out, data.table(post_id = post
@@ -509,5 +587,5 @@ create_organized_test_data <- function(timeline){
 
 
 create_pulled_test_data <- function(timeline){
-  "hello"
+  "hi"
 }
