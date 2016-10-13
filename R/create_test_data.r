@@ -322,88 +322,17 @@ create_calculated_test_data <- function(timeline
   out <- data.table()
 
   for (post in post_ids){
-   post_time <- timeline %>%
-     dplyr::filter(action == "posts", post_id == post) %>%
-     {.$time} %>%
-     min
-
-   post_location <- timeline %>%
-     dplyr::filter(action == "posts", post_id == post) %>%
-     dplyr::arrange(time) %>%
-     dplyr::slice(1) %>%
-     {.$object_id}
-
-   post_location_type <- timeline %>%
-     dplyr::filter(action == "posts", post_id == post) %>%
-     dplyr::arrange(time) %>%
-     dplyr::slice(1) %>%
-     {.$object_type}
-
-   post_owner <- timeline %>%
-     dplyr::filter(action == "posts", post_id == post) %>%
-     dplyr::arrange(time) %>%
-     dplyr::slice(1) %>%
-     {.$owner_id}
-
-  post_owner_type  <- timeline %>%
-     dplyr::filter(action == "posts", post_id == post) %>%
-     dplyr::arrange(time) %>%
-     dplyr::slice(1) %>%
-     {.$owner_type}
-
-  # Determine reach by counting all users who have ever joined the space or
-  # connected to the poster, depending on post type
-  if (post_location_type == "Timeline"){
-    reach <- timeline %>%
-      dplyr::filter(
-        # time <= post_time
-        # , 
-        action %in% c("connects", "follows")
-        , object_id == post_location
-        , owner_id != post_owner | owner_type != post_owner_type
-    ) %>%
-    {data.frame(id = .$owner_id, type = .$owner_type)} %>%
-    unique %>%
-    nrow
-  } else {
-    reach <- timeline %>%
-      dplyr::filter(
-        # time <= post_time
-        # , 
-        action == "joins"
-        , object_id == post_location
-        , owner_id != post_owner | owner_type != post_owner_type
-      ) %>%
-      {data.frame(id = .$owner_id, type = .$owner_type)} %>%
-      unique %>%
-      nrow
-  }
-
-  # Find number of comments
-  comments  <- timeline %>%
-    dplyr::filter(
-      time >= post_time
-      , action == "comments"
-      , object_id == post
-    ) %>%
-    nrow
+    x <- find_reach_comments_shares(post, timeline)
+    comments <- x$Comments
+    shares <- x$Shares
+    reach <- x$Reach
+    score <- 
+      (weight_comment*comments 
+       + weight_share*shares
+      )/reach^reach_modifier
     
-  # Find number of shares
-  shares <- timeline %>%  
-    dplyr::filter(
-      time >= post_time
-      , action == "shares"
-      , object_id == post
-    ) %>%
-    nrow
-
-  score <- 
-    (weight_comment*comments 
-     + weight_share*shares
-    )/reach^reach_modifier
-  
-  out <- rbind(out, data.table(post_id = post
-                               , engagement_score = score))
+    out <- rbind(out, data.table(post_id = post
+                                 , engagement_score = score))
 
   }
   return(out)
@@ -424,67 +353,66 @@ create_translated_test_data <- function(timeline){
   out <- data.table()
 
   for (post in post_ids){
-   post_time <- timeline %>%
-     dplyr::filter(action == "posts", post_id == post) %>%
-     {.$time} %>%
-     min
+    x <- find_reach_comments_shares(post, timeline)
+    comments <- x$Comments
+    shares <- x$Shares
+    reach <- x$Reach
+    out <- rbind(out, data.table(post_id = post
+                                 , reach = reach
+                                 , comments = comments
+                                 , shares = shares))
 
-   post_location <- timeline %>%
-     dplyr::filter(action == "posts", post_id == post) %>%
-     dplyr::arrange(time) %>%
-     dplyr::slice(1) %>%
-     {.$object_id}
+  }
+  return(out)
+}
 
-   post_location_type <- timeline %>%
-     dplyr::filter(action == "posts", post_id == post) %>%
-     dplyr::arrange(time) %>%
-     dplyr::slice(1) %>%
-     {.$object_type}
+#' Find reach, comments, shares.
+#' 
+#' @param post A post_id
+#' @param timeline A timeline of post-related actions, in the same form as
+#' gloograph::test_timeline
+#' @importFrom magrittr %>%
 
-   post_owner <- timeline %>%
-     dplyr::filter(action == "posts", post_id == post) %>%
-     dplyr::arrange(time) %>%
-     dplyr::slice(1) %>%
-     {.$owner_id}
+find_reach_comments_shares <- function(post
+                                       , timeline){
 
-  post_owner_type  <- timeline %>%
-     dplyr::filter(action == "posts", post_id == post) %>%
-     dplyr::arrange(time) %>%
-     dplyr::slice(1) %>%
-     {.$owner_type}
+  post_info <- timeline %>%
+    dplyr::filter(action == "posts", post_id == post) %>%
+    dplyr::arrange(time) %>%
+    dplyr::slice(1) 
+
+  post_time <- post_info$time
+  post_location <- post_info$object_id
+  post_location_type <- post_info$object_type
+  post_owner <- post_info$owner_id
+  post_owner_type  <- post_info$owner_type
 
   # Determine reach by counting all users who have ever joined the space or
   # connected to the poster, depending on post type
-  if (post_location_type == "Timeline"){
-    reach <- timeline %>%
-      dplyr::filter(
-        # time <= post_time
-        # , 
-        action %in% c("connects", "follows")
-        , object_id == post_location
-#         , owner_id != post_owner | owner_type != post_owner_type
-    ) %>%
-    {data.frame(id = .$owner_id, type = .$owner_type)} %>%
-    unique %>%
-    nrow
-  } else {
-    reach <- timeline %>%
-      dplyr::filter(
-        # time <= post_time
-        # , 
-        action == "joins"
+  reach <- timeline %>% {
+    if (post_location_type == "Timeline"){
+      dplyr::filter(.
+        , action %in% c("connects", "follows")
         , object_id == post_location
         , owner_id != post_owner | owner_type != post_owner_type
-      ) %>%
-      {data.frame(id = .$owner_id, type = .$owner_type)} %>%
-      unique %>%
-      nrow
-  }
+      )
+    } else {
+      dplyr::filter(.
+        , action == "joins"
+        , object_id == post_location
+        , owner_id != post_owner | owner_type != post_owner_type
+      )
+    }
+  } %>%
+  {data.frame(id = .$owner_id, type = .$owner_type)} %>%
+  unique %>%
+  nrow
 
   # Find number of comments
   comments  <- timeline %>%
     dplyr::filter(
-      action == "comments"
+      time >= post_time
+      , action == "comments"
       , object_id == post
     ) %>%
     nrow
@@ -492,18 +420,13 @@ create_translated_test_data <- function(timeline){
   # Find number of shares
   shares <- timeline %>%  
     dplyr::filter(
-      action == "shares"
+      time >= post_time
+      , action == "shares"
       , object_id == post
     ) %>%
     nrow
 
-  out <- rbind(out, data.table(post_id = post
-                               , reach = reach
-                               , comments = comments
-                               , shares = shares))
-
-  }
-  return(out)
+  list(Reach = reach, Comments = comments, Shares = shares)
 }
 
 #' Create 'organized' test data.
